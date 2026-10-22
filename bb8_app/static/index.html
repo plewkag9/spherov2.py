@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#14161a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BB-8">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/static/icon-180.png">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <title>BB-8</title>
+</head>
+<body>
+  <header class="bar">
+    <div class="title">
+      <span class="dot" id="status-dot"></span>
+      <div>
+        <h1>BB-8</h1>
+        <p id="status-text">Conectando à ponte…</p>
+      </div>
+    </div>
+    <div class="battery" id="battery" hidden>
+      <span class="battery-icon"><span id="battery-fill"></span></span>
+      <span id="battery-text"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="connect-panel">
+      <h2>Encontrar o robô</h2>
+      <p class="hint">Tire o BB-8 da base ou dê uma leve sacudida para acordá-lo, e deixe-o perto da ponte.</p>
+      <button class="primary wide" id="scan-btn">Procurar BB-8</button>
+      <ul class="toy-list" id="toy-list"></ul>
+    </section>
+
+    <div id="control" hidden>
+      <section class="panel drive">
+        <div class="joystick" id="joystick" aria-label="Joystick: arraste para dirigir">
+          <div class="ring"></div>
+          <div class="knob" id="knob"></div>
+        </div>
+        <div class="drive-buttons">
+          <button class="boost" id="boost-btn">Turbo</button>
+          <button class="danger" id="stop-btn">Parar</button>
+        </div>
+        <label class="slider">
+          <span>Velocidade máxima <output id="speed-out"></output></span>
+          <input type="range" id="speed" min="10" max="255" step="5">
+        </label>
+        <p class="hint desktop-only">No computador: setas ou WASD para dirigir, espaço para turbo.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Luz</h2>
+        <div class="swatches" id="swatches"></div>
+        <div class="row">
+          <label class="color-pick">Outra cor <input type="color" id="color-input"></label>
+          <label class="toggle"><input type="checkbox" id="back-led"> Luz azul de trás</label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Calibrar direção</h2>
+        <p class="hint" id="aim-hint">Gire o BB-8 até a luz azul ficar virada para você. Essa vira a direção "para trás" do joystick.</p>
+        <div id="aim-controls" hidden>
+          <label class="slider">
+            <span>Girar <output id="aim-out">0°</output></span>
+            <input type="range" id="aim" min="0" max="359" value="0">
+          </label>
+        </div>
+        <button class="wide" id="aim-btn">Calibrar</button>
+      </section>
+
+      <section class="panel row actions">
+        <button id="sleep-btn">Dormir</button>
+        <button id="disconnect-btn">Desconectar</button>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
