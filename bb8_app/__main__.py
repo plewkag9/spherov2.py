@@ -41,7 +41,11 @@ def main():
     if args.token:
         url += f'#token={args.token}'
     print(f'Abra no navegador (computador ou iPhone no mesmo Wi-Fi): {url}')
-    web.run_app(create_app(find_toys, args.token), host=args.host, port=args.port, print=None)
+    print('Deixe esta janela aberta. Fechar a janela ou apertar Ctrl+C desliga a ponte.', flush=True)
+    try:
+        web.run_app(create_app(find_toys, args.token), host=args.host, port=args.port, print=None)
+    finally:
+        print('Ponte desligada.', flush=True)
 
 
 if __name__ == '__main__':

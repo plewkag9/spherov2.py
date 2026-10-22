@@ -30,6 +30,8 @@ pip install -r bb8_app/requirements.txt
 python -m bb8_app
 ```
 
+No Windows, também dá para dar duplo clique em `iniciar-bb8.bat`, na pasta principal.
+
 O terminal mostra o endereço para abrir, algo como `http://192.168.0.10:8088/`. Abra no navegador do computador ou no iPhone ligado ao mesmo Wi-Fi.
 
 Para testar a página sem o robô:
