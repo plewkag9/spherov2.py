@@ -1,0 +1,4 @@
+aiohttp>=3.9
+bleak>=0.21
+numpy
+transforms3d
