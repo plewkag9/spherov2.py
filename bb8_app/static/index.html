@@ -8,10 +8,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BB-8">
-  <link rel="manifest" href="/static/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/static/icon-180.png">
-  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="manifest" href="static/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="static/icon-180.png">
+  <link rel="icon" href="static/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="static/style.css">
   <title>BB-8</title>
 </head>
 <body>
@@ -32,7 +32,7 @@
   <main>
     <section class="panel" id="connect-panel">
       <h2>Encontrar o robô</h2>
-      <p class="hint">Tire o BB-8 da base ou dê uma leve sacudida para acordá-lo, e deixe-o perto da ponte.</p>
+      <p class="hint" id="connect-hint">Tire o BB-8 da base ou dê uma leve sacudida para acordá-lo, e deixe-o perto da ponte.</p>
       <button class="primary wide" id="scan-btn">Procurar BB-8</button>
       <ul class="toy-list" id="toy-list"></ul>
     </section>
@@ -100,6 +100,7 @@
   </main>
 
   <div class="toast" id="toast" hidden></div>
-  <script src="/static/app.js"></script>
+  <script src="static/bb8-ble.js"></script>
+  <script src="static/app.js"></script>
 </body>
 </html>

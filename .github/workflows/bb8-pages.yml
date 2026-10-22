@@ -1,0 +1,38 @@
+name: Publish BB-8 page
+
+# Publishes bb8_app/static as a GitHub Pages site, so the iPhone can open the controller in Bluefy
+# and talk to the robot directly over Bluetooth, without the bridge.
+on:
+  push:
+    branches: [main]
+    paths: ['bb8_app/static/**', '.github/workflows/bb8-pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build site
+        run: |
+          mkdir -p site
+          cp -r bb8_app/static site/static
+          cp bb8_app/static/index.html site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

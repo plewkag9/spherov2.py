@@ -21,6 +21,16 @@ A ponte roda num computador ou Raspberry Pi a até uns 30 m do robô. Ela fala c
 
 Por segurança, o robô para sozinho se a página ficar 0,6 s sem mandar comandos (por exemplo, se o Wi-Fi cair). Se o Bluetooth cair, a ponte tenta reconectar sozinha por até 1 minuto.
 
+## Sem computador: iPhone direto no BB-8
+
+A mesma página também fala direto com o robô por Bluetooth, sem a ponte (`static/bb8-ble.js`). O Safari não deixa páginas usarem Bluetooth, então no iPhone ela roda no navegador gratuito **Bluefy** (na App Store). No computador ou no Android, use o Chrome.
+
+1. Ative o GitHub Pages uma vez: no repositório, **Settings → Pages → Source: GitHub Actions**.
+2. Depois que este código estiver na branch `main`, o workflow `Publish BB-8 page` publica a página em `https://plewkag9.github.io/spherov2.py/`.
+3. No iPhone, abra esse endereço no **Bluefy**, toque em **Conectar ao BB-8** e escolha o robô na lista.
+
+O modo direto liga sozinho quando a página vem do GitHub Pages. Em outro endereço, acrescente `?direto` ao link. No modo direto não há controle de longe, que continua sendo papel da ponte.
+
 ## Como rodar
 
 Precisa de Python 3.9 ou mais novo e de um computador com Bluetooth 4.0 (BLE).
