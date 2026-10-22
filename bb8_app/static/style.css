@@ -77,6 +77,21 @@ button.wide { width: 100%; }
 }
 .joystick.active .knob { transition: none; }
 
+.compass-row { display: flex; align-items: center; gap: 16px; width: 100%; }
+.compass { width: 96px; height: 96px; flex: none; }
+.compass-ring { fill: #1b1e23; stroke: var(--line); stroke-width: 2; }
+.compass-label { fill: var(--muted); font-size: 9px; font-weight: 700; text-anchor: middle; letter-spacing: .08em; }
+#compass-robot { transition: transform .15s linear; }
+.compass.unknown #compass-robot { opacity: .35; }
+.robot-body { fill: #ece7de; }
+.robot-panel { fill: none; stroke: var(--orange); stroke-width: 5; }
+.robot-arrow { fill: var(--orange); }
+.robot-tail { fill: var(--blue); }
+.compass-title { color: var(--muted); font-size: 14px; }
+.compass-value { font-size: 20px; font-weight: 600; }
+.compass-value::first-letter { text-transform: uppercase; }
+.compass-flip { margin-top: 12px; }
+
 .drive-buttons { display: flex; gap: 12px; width: 100%; }
 .drive-buttons button { flex: 1; }
 .boost.on { background: var(--orange); color: #1a1006; }

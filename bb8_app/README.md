@@ -15,6 +15,7 @@ A ponte roda num computador ou Raspberry Pi a até uns 30 m do robô. Ela fala c
 - No computador: setas ou WASD para dirigir, espaço para turbo
 - Cor do LED e luz azul de trás
 - Calibração da direção ("frente" do joystick)
+- Bússola: desenho do BB-8 que gira junto com o robô, pelo giroscópio dele
 - Estado da bateria
 - Dormir e desconectar
 

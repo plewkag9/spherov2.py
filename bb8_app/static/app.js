@@ -98,10 +98,33 @@ function render(next) {
     el.classList.toggle('on', el.dataset.rgb === state.color.join(','));
   });
 
+  renderCompass(state.yaw);
+
   $('aim-controls').hidden = !state.aiming;
   $('aim-btn').textContent = state.aiming ? 'Pronto' : 'Calibrar';
   $('aim-btn').classList.toggle('primary', state.aiming);
   $('joystick').style.opacity = state.aiming ? 0.3 : 1;
+}
+
+// -- compass ------------------------------------------------------------------
+
+const DIRECTIONS = ['frente', 'frente-direita', 'direita', 'trás-direita', 'trás', 'trás-esquerda', 'esquerda', 'frente-esquerda'];
+const compass = { angle: 0, flip: false };
+try { compass.flip = localStorage.getItem('bb8-compass-flip') === '1'; } catch (e) { /* private mode */ }
+
+function renderCompass(yaw) {
+  const svg = document.querySelector('.compass');
+  svg.classList.toggle('unknown', yaw == null);
+  if (yaw == null) {
+    $('compass-text').textContent = 'Aguardando o giroscópio…';
+    return;
+  }
+  const target = compass.flip ? (360 - yaw) % 360 : yaw;
+  // Turn the short way round so 359° → 1° does not spin the drawing a full circle.
+  const delta = ((target - compass.angle) % 360 + 540) % 360 - 180;
+  compass.angle += delta;
+  $('compass-robot').style.transform = `rotate(${compass.angle}deg)`;
+  $('compass-text').textContent = `${DIRECTIONS[Math.round(target / 45) % 8]} · ${target}°`;
 }
 
 function renderToys(toys) {
@@ -257,6 +280,13 @@ function setupControls() {
   $('aim').oninput = (e) => {
     $('aim-out').textContent = e.target.value + '°';
     send({ type: 'aim', angle: Number(e.target.value) });
+  };
+
+  $('compass-flip').checked = compass.flip;
+  $('compass-flip').onchange = (e) => {
+    compass.flip = e.target.checked;
+    try { localStorage.setItem('bb8-compass-flip', compass.flip ? '1' : '0'); } catch (err) { /* private mode */ }
+    renderCompass(state.yaw);
   };
 
   $('sleep-btn').onclick = () => send({ type: 'sleep' });

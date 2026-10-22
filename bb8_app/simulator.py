@@ -2,12 +2,37 @@
 from spherov2.listeners.core import PowerState, PowerStates
 
 
+class SimulatedSensorControl:
+    def __init__(self, toy):
+        self._toy = toy
+        self.listeners = set()
+        self.enabled = set()
+
+    def add_sensor_data_listener(self, listener):
+        self.listeners.add(listener)
+
+    def set_interval(self, interval):
+        self._toy._record('set_sensor_interval', interval)
+
+    def enable(self, *sensors):
+        self.enabled.update(sensors)
+        self.emit_yaw(0)
+
+    def emit_yaw(self, yaw):
+        """Pretend the IMU reported ``yaw`` (counter-clockwise degrees, like the real robot)."""
+        if 'attitude' in self.enabled:
+            yaw = (yaw + 180) % 360 - 180
+            for listener in list(self.listeners):
+                listener({'attitude': {'pitch': 0., 'roll': 0., 'yaw': float(yaw)}})
+
+
 class SimulatedBB8:
     def __init__(self, name='BB-SIM1', address='00:00:00:00:00:00'):
         self.name = name
         self.address = address
         self.calls = []
         self.entered = False
+        self.sensor_control = SimulatedSensorControl(self)
 
     def __enter__(self):
         self.entered = True
@@ -35,9 +60,11 @@ class SimulatedBB8:
 
     def roll(self, speed, heading, roll_mode, reverse_flag):
         self._record('roll', speed, heading, roll_mode, reverse_flag)
+        self.sensor_control.emit_yaw(-heading)  # the simulated robot turns instantly
 
     def set_heading(self, heading):
         self._record('set_heading', heading)
+        self.sensor_control.emit_yaw(0)
 
     def sleep(self, interval_option, unk, unk2):
         self._record('sleep', interval_option, unk, unk2)

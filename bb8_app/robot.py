@@ -11,6 +11,8 @@ DRIVE_INTERVAL = 0.1  # seconds between roll commands while driving
 DRIVE_WATCHDOG = 0.6  # stop if the UI goes quiet for this long while moving
 BATTERY_INTERVAL = 30.0
 BOOST_SPEED = 255
+SENSOR_INTERVAL_MS = 100  # attitude streaming period, ~10 Hz
+YAW_STEP = 2  # only report orientation changes of at least this many degrees
 
 
 class RobotError(Exception):
@@ -56,6 +58,7 @@ class RobotController:
             'aiming': False,
             'max_speed': 90,
             'heading': 0,
+            'yaw': None,  # measured orientation in degrees, clockwise from "forward"; None until streaming
             'error': None,
         }
 
@@ -108,8 +111,29 @@ class RobotController:
             self._toy = toy
             self._target = self._sent = (0, self.state['heading'])
             self._update(connected=True, name=toy.name, address=toy.address, back_led=0,
-                         aiming=False, error=None)
+                         aiming=False, yaw=None, error=None)
+        self._start_orientation_stream(toy)
         self.refresh_battery()
+
+    def _start_orientation_stream(self, toy):
+        """Stream the IMU attitude so the page can draw which way BB-8 is facing."""
+        try:
+            sensors = toy.sensor_control
+            sensors.add_sensor_data_listener(self._on_sensor_data)
+            sensors.set_interval(SENSOR_INTERVAL_MS)
+            sensors.enable('attitude')
+        except Exception as e:  # driving still works without it
+            self._update(error=f'Bússola indisponível: {e}')
+
+    def _on_sensor_data(self, data):
+        attitude = data.get('attitude')
+        if not attitude or self._toy is None:
+            return
+        # The IMU's yaw grows counter-clockwise; the page and roll headings use clockwise degrees.
+        yaw = int(round(-attitude['yaw'])) % 360
+        previous = self.state['yaw']
+        if previous is None or min(abs(yaw - previous), 360 - abs(yaw - previous)) >= YAW_STEP:
+            self._update(yaw=yaw)
 
     def disconnect(self):
         with self._lock:
@@ -119,7 +143,7 @@ class RobotController:
                     toy.__exit__(None, None, None)
                 except Exception:
                     pass
-            self._update(connected=False, aiming=False, battery=None)
+            self._update(connected=False, aiming=False, battery=None, yaw=None)
 
     def sleep(self):
         """Put the robot to sleep and drop the connection. Reconnecting wakes it again."""

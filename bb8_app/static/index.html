@@ -39,6 +39,22 @@
 
     <div id="control" hidden>
       <section class="panel drive">
+        <div class="compass-row">
+          <svg class="compass" viewBox="-60 -60 120 120" aria-hidden="true">
+            <circle r="56" class="compass-ring"/>
+            <text y="-42" class="compass-label">FRENTE</text>
+            <g id="compass-robot">
+              <circle r="30" class="robot-body"/>
+              <circle r="15" class="robot-panel"/>
+              <path d="M0 -46 L9 -32 H-9 Z" class="robot-arrow"/>
+              <circle cy="28" r="5" class="robot-tail"/>
+            </g>
+          </svg>
+          <div>
+            <p class="compass-title">Para onde ele está virado</p>
+            <p class="compass-value" id="compass-text">Aguardando o giroscópio…</p>
+          </div>
+        </div>
         <div class="joystick" id="joystick" aria-label="Joystick: arraste para dirigir">
           <div class="ring"></div>
           <div class="knob" id="knob"></div>
@@ -73,6 +89,7 @@
           </label>
         </div>
         <button class="wide" id="aim-btn">Calibrar</button>
+        <label class="toggle compass-flip"><input type="checkbox" id="compass-flip"> Inverter bússola (se o desenho girar para o lado errado)</label>
       </section>
 
       <section class="panel row actions">

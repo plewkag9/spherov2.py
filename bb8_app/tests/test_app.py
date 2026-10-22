@@ -128,3 +128,15 @@ async def test_serves_page(aiohttp_client):
     resp = await client.get('/')
     assert resp.status == 200 and 'BB-8' in await resp.text()
     assert (await client.get('/static/app.js')).status == 200
+
+
+def test_orientation_stream_reports_clockwise_yaw(controller, toy):
+    controller.connect()
+    assert 'attitude' in toy.sensor_control.enabled
+    assert controller.state['yaw'] == 0
+    toy.sensor_control.emit_yaw(90)  # IMU: 90° counter-clockwise
+    assert controller.state['yaw'] == 270
+    toy.sensor_control.emit_yaw(89)  # below YAW_STEP: no update
+    assert controller.state['yaw'] == 270
+    controller.disconnect()
+    assert controller.state['yaw'] is None
