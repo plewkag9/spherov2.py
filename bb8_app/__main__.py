@@ -21,10 +21,26 @@ def _lan_address():
         return 'localhost'
 
 
+DEFAULT_PORTS = range(8088, 8100)
+
+
+def _free_port(host, ports):
+    """First port in ``ports`` nothing else is using on this machine (another program may hold 8088)."""
+    for port in ports:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind((host, port))
+            except OSError:
+                continue
+            return port
+    raise SystemExit(f'Nenhuma porta livre entre {ports[0]} e {ports[-1]}. Use --port com outro número.')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Ponte entre o navegador e o Sphero BB-8.')
     parser.add_argument('--host', default='0.0.0.0')
-    parser.add_argument('--port', type=int, default=8088)
+    parser.add_argument('--port', type=int, default=None,
+                        help='porta da página (padrão: a primeira livre a partir de 8088)')
     parser.add_argument('--token', default=os.environ.get('BB8_TOKEN'),
                         help='senha exigida pela página (ou variável BB8_TOKEN)')
     parser.add_argument('--simulate', action='store_true', help='usa um BB-8 falso, para testar sem o robô')
@@ -40,6 +56,8 @@ def main():
         from spherov2.toy.bb8 import BB8
         find_toys = partial(scanner.find_toys, toy_types=[BB8])
 
+    if args.port is None:
+        args.port = _free_port(args.host, DEFAULT_PORTS)
     url = f'http://{_lan_address()}:{args.port}/'
     if args.token:
         url += f'#token={args.token}'

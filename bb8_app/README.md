@@ -30,9 +30,9 @@ pip install -r bb8_app/requirements.txt
 python -m bb8_app
 ```
 
-No Windows, também dá para dar duplo clique em `iniciar-bb8.bat`, na pasta principal: ele liga a ponte e já abre a página no navegador (`--open`). Para ter isso na Área de Trabalho, dê duplo clique uma vez em `criar-atalho-bb8.bat`, que cria o atalho **BB-8**. O arquivo `Abrir BB-8.url` abre só a página, quando a ponte já está ligada.
+No Windows, também dá para dar duplo clique em `iniciar-bb8.bat`, na pasta principal: ele liga a ponte e já abre a página no navegador (`--open`). Para ter isso na Área de Trabalho, dê duplo clique uma vez em `criar-atalho-bb8.bat`, que cria o atalho **BB-8**.
 
-O terminal mostra o endereço para abrir, algo como `http://192.168.0.10:8088/`. Abra no navegador do computador ou no iPhone ligado ao mesmo Wi-Fi.
+O terminal mostra o endereço para abrir, algo como `http://192.168.0.10:8088/`. Se a porta 8088 já estiver em uso por outro programa, a ponte usa a próxima livre (8089, 8090…) e mostra o endereço certo. Abra no navegador do computador ou no iPhone ligado ao mesmo Wi-Fi.
 
 Para testar a página sem o robô:
 
