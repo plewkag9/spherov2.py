@@ -68,6 +68,7 @@
           <span>Velocidade máxima <output id="speed-out"></output></span>
           <input type="range" id="speed" min="10" max="255" step="5">
         </label>
+        <label class="toggle"><input type="checkbox" id="smooth"> Movimento suave (a cabeça balança menos)</label>
         <p class="hint desktop-only">No computador: setas ou WASD para dirigir, espaço para turbo.</p>
       </section>
 
@@ -101,6 +102,7 @@
   </main>
 
   <div class="toast" id="toast" hidden></div>
+  <script src="static/smooth.js"></script>
   <script src="static/bb8-ble.js"></script>
   <script src="static/app.js"></script>
 </body>

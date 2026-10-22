@@ -192,17 +192,37 @@ function renderToys(toys) {
 
 // -- joystick ---------------------------------------------------------------
 
-const drive = { x: 0, y: 0, boost: false, active: false, timer: null };
+const drive = { x: 0, y: 0, sent: [0, 0], boost: false, releasing: false, timer: null, smooth: true };
+try { drive.smooth = localStorage.getItem('bb8-smooth') !== '0'; } catch (e) { /* private mode */ }
+
+function driveTick() {
+  drive.sent = drive.smooth ? easeJoystick(drive.sent, [drive.x, drive.y]) : [drive.x, drive.y];
+  if (drive.releasing && !drive.sent[0] && !drive.sent[1]) {
+    stopDriving();
+    return;
+  }
+  send({ type: 'drive', x: drive.sent[0], y: drive.sent[1], boost: drive.boost });
+}
 
 function startDriving() {
+  drive.releasing = false;
   if (drive.timer) return;
-  drive.timer = setInterval(() => send({ type: 'drive', x: drive.x, y: drive.y, boost: drive.boost }), DRIVE_PERIOD_MS);
+  drive.timer = setInterval(driveTick, DRIVE_PERIOD_MS);
+}
+
+// Letting go of the joystick: with gentle driving the robot slows down instead of braking hard.
+function releaseDriving() {
+  drive.x = drive.y = 0;
+  if (drive.smooth && drive.timer) drive.releasing = true;
+  else if (drive.timer) stopDriving();
 }
 
 function stopDriving() {
   clearInterval(drive.timer);
   drive.timer = null;
   drive.x = drive.y = 0;
+  drive.sent = [0, 0];
+  drive.releasing = false;
   send({ type: 'stop' });
 }
 
@@ -226,7 +246,7 @@ function setupJoystick() {
     pointer = null;
     pad.classList.remove('active');
     knob.style.transform = '';
-    stopDriving();
+    releaseDriving();
   };
 
   pad.addEventListener('pointerdown', (event) => {
@@ -262,8 +282,8 @@ function setupKeyboard() {
       drive.x = x / length;
       drive.y = y / length;
       startDriving();
-    } else if (drive.timer) {
-      stopDriving();
+    } else {
+      releaseDriving();
     }
   };
   addEventListener('keydown', (e) => {
@@ -325,6 +345,12 @@ function setupControls() {
     compass.flip = e.target.checked;
     try { localStorage.setItem('bb8-compass-flip', compass.flip ? '1' : '0'); } catch (err) { /* private mode */ }
     renderCompass(state.yaw);
+  };
+
+  $('smooth').checked = drive.smooth;
+  $('smooth').onchange = (e) => {
+    drive.smooth = e.target.checked;
+    try { localStorage.setItem('bb8-smooth', drive.smooth ? '1' : '0'); } catch (err) { /* private mode */ }
   };
 
   $('sleep-btn').onclick = () => send({ type: 'sleep' });
