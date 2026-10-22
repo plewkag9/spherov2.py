@@ -20,6 +20,10 @@ const BATTERY = {
 };
 const DRIVE_PERIOD_MS = 100;
 
+// Direct mode talks to the robot over Web Bluetooth (Bluefy on iPhone) instead of through the bridge.
+// It is used when the page is not served by the bridge (e.g. GitHub Pages) or with ?direto in the link.
+const DIRECT = new URLSearchParams(location.search).has('direto') || location.hostname.endsWith('github.io');
+let direct = null;
 let ws = null;
 let state = {};
 let retryMs = 500;
@@ -36,7 +40,8 @@ function token() {
 }
 
 function send(message) {
-  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+  if (direct) direct.send(message);
+  else if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
 }
 
 function toast(text) {
@@ -55,7 +60,11 @@ function setStatus(text, level) {
 function connectBridge() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const t = token();
-  ws = new WebSocket(`${proto}://${location.host}/ws${t ? '?token=' + encodeURIComponent(t) : ''}`);
+  const url = new URL('ws', location.href);
+  url.protocol = proto;
+  url.search = t ? '?token=' + encodeURIComponent(t) : '';
+  url.hash = '';
+  ws = new WebSocket(url);
   ws.onopen = () => { retryMs = 500; };
   ws.onmessage = (event) => handle(JSON.parse(event.data));
   ws.onclose = () => {
@@ -70,7 +79,10 @@ function connectBridge() {
 function handle(message) {
   if (message.type === 'state') render(message.state);
   else if (message.type === 'scan') renderToys(message.toys);
-  else if (message.type === 'error') toast(message.message);
+  else if (message.type === 'error') {
+    toast(message.message);
+    if (direct) resetScanButton();
+  }
 }
 
 function render(next) {
@@ -78,8 +90,10 @@ function render(next) {
   const connected = state.connected;
   $('connect-panel').hidden = connected;
   $('control').hidden = !connected;
+  if (direct && !connected) resetScanButton();
   if (connected) setStatus(`Conectado a ${state.name}`, 'ok');
   else if (state.reconnecting) setStatus('Conexão perdida. Reconectando…', 'bad');
+  else if (direct) setStatus('Bluetooth direto. BB-8 desconectado.', 'warn');
   else setStatus('Ponte pronta. BB-8 desconectado.', 'warn');
   if (state.error && state.error !== render.lastError) toast(state.error);
   render.lastError = state.error;
@@ -128,6 +142,27 @@ function renderCompass(yaw) {
   compass.angle += delta;
   $('compass-robot').style.transform = `rotate(${compass.angle}deg)`;
   $('compass-text').textContent = `${DIRECTIONS[Math.round(target / 45) % 8]} · ${target}°`;
+}
+
+function resetScanButton() {
+  $('scan-btn').disabled = false;
+  $('scan-btn').textContent = 'Conectar ao BB-8';
+}
+
+function startDirect() {
+  if (!BB8Direct.supported()) {
+    setStatus('Este navegador não tem Bluetooth.', 'bad');
+    $('connect-panel').hidden = false;
+    $('scan-btn').disabled = true;
+    $('connect-hint').textContent = 'No iPhone, abra esta página no app gratuito Bluefy (o Safari não acessa Bluetooth). '
+      + 'No computador ou Android, use o Chrome.';
+    return;
+  }
+  $('connect-hint').textContent = 'Tire o BB-8 da base ou dê uma leve sacudida para acordá-lo. '
+    + 'Toque em Conectar e escolha o BB-8 na lista do Bluetooth.';
+  resetScanButton();
+  direct = new BB8Direct(handle);
+  direct.start();
 }
 
 function renderToys(toys) {
@@ -244,7 +279,7 @@ function setupKeyboard() {
 function setupControls() {
   $('scan-btn').onclick = () => {
     $('scan-btn').disabled = true;
-    $('scan-btn').textContent = 'Procurando…';
+    $('scan-btn').textContent = direct ? 'Conectando…' : 'Procurando…';
     send({ type: 'scan', timeout: 5 });
   };
 
@@ -299,4 +334,5 @@ function setupControls() {
 setupJoystick();
 setupKeyboard();
 setupControls();
-connectBridge();
+if (DIRECT) startDirect();
+else connectBridge();
