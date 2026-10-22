@@ -140,3 +140,32 @@ def test_orientation_stream_reports_clockwise_yaw(controller, toy):
     assert controller.state['yaw'] == 270
     controller.disconnect()
     assert controller.state['yaw'] is None
+
+
+def test_dropped_link_reconnects(controller, toy, monkeypatch):
+    monkeypatch.setattr(robot_module, 'RECONNECT_INTERVAL', 0.05)
+    controller.connect()
+    toy.in_range = False
+    assert wait_for(lambda: controller.state['reconnecting'] and not controller.state['connected'])
+    assert 'perdida' in controller.state['error']
+    toy.in_range = True
+    assert wait_for(lambda: controller.state['connected'] and not controller.state['reconnecting'])
+    assert controller.state['error'] is None
+
+
+def test_reconnect_gives_up(controller, toy, monkeypatch):
+    monkeypatch.setattr(robot_module, 'RECONNECT_INTERVAL', 0.05)
+    monkeypatch.setattr(robot_module, 'RECONNECT_WINDOW', 0.3)
+    controller.connect()
+    toy.in_range = False
+    assert wait_for(lambda: controller.state['reconnecting'])
+    assert wait_for(lambda: not controller.state['reconnecting'], timeout=3)
+    assert 'Procurar' in controller.state['error'] and not controller.state['connected']
+
+
+def test_manual_disconnect_does_not_reconnect(controller, toy, monkeypatch):
+    monkeypatch.setattr(robot_module, 'RECONNECT_INTERVAL', 0.05)
+    controller.connect()
+    controller.disconnect()
+    time.sleep(0.3)
+    assert not controller.state['connected'] and not controller.state['reconnecting']

@@ -13,6 +13,8 @@ BATTERY_INTERVAL = 30.0
 BOOST_SPEED = 255
 SENSOR_INTERVAL_MS = 100  # attitude streaming period, ~10 Hz
 YAW_STEP = 2  # only report orientation changes of at least this many degrees
+RECONNECT_INTERVAL = 3.0  # seconds between reconnection attempts after the link drops
+RECONNECT_WINDOW = 60.0  # give up reconnecting after this long
 
 
 class RobotError(Exception):
@@ -47,6 +49,9 @@ class RobotController:
         self._last_drive = 0.0
         self._last_battery = 0.0
         self._boost = False
+        self._reconnect_name = None
+        self._reconnect_until = 0.0
+        self._next_reconnect = 0.0
 
         self.state = {
             'connected': False,
@@ -59,6 +64,7 @@ class RobotController:
             'max_speed': 90,
             'heading': 0,
             'yaw': None,  # measured orientation in degrees, clockwise from "forward"; None until streaming
+            'reconnecting': False,
             'error': None,
         }
 
@@ -87,11 +93,17 @@ class RobotController:
 
     def connect(self, name: Optional[str] = None, timeout: float = 5.0):
         with self._lock:
+            self._reconnect_name = None
+            self._connect(name, timeout)
+
+    def _connect(self, name: Optional[str], timeout: float = 5.0, fresh: bool = False):
+        with self._lock:
             if self._toy is not None:
                 if name is None or self._toy.name == name:
                     return
                 self.disconnect()
-            toy = self._toys_by_name.get(name) if name else None
+            # After a dropped link the old toy object may be half-closed, so scan for a new one.
+            toy = self._toys_by_name.get(name) if name and not fresh else None
             if toy is None:
                 toys = self._find_toys(timeout=timeout)
                 if name:
@@ -110,8 +122,9 @@ class RobotController:
                 raise
             self._toy = toy
             self._target = self._sent = (0, self.state['heading'])
+            self._reconnect_name = None
             self._update(connected=True, name=toy.name, address=toy.address, back_led=0,
-                         aiming=False, yaw=None, error=None)
+                         aiming=False, yaw=None, reconnecting=False, error=None)
         self._start_orientation_stream(toy)
         self.refresh_battery()
 
@@ -137,13 +150,47 @@ class RobotController:
 
     def disconnect(self):
         with self._lock:
+            self._reconnect_name = None
+            self._drop()
+            self._update(reconnecting=False)
+
+    def _drop(self):
+        with self._lock:
             toy, self._toy = self._toy, None
             if toy is not None:
                 try:
                     toy.__exit__(None, None, None)
                 except Exception:
                     pass
+            self._target = self._sent = (0, self._target[1])
             self._update(connected=False, aiming=False, battery=None, yaw=None)
+
+    def _link_lost(self, reason: str = ''):
+        """The Bluetooth link dropped (out of range, low battery...): close it and start reconnecting."""
+        with self._lock:
+            name = self._toy.name if self._toy is not None else None
+            self._drop()
+            now = time.monotonic()
+            self._reconnect_name = name
+            self._reconnect_until = now + RECONNECT_WINDOW
+            self._next_reconnect = now + RECONNECT_INTERVAL
+            message = 'Conexão com o BB-8 perdida. Tentando reconectar…'
+            self._update(reconnecting=name is not None, error=f'{message} ({reason})' if reason else message)
+
+    def _try_reconnect(self):
+        now = time.monotonic()
+        if self._reconnect_name is None or now < self._next_reconnect:
+            return
+        if now > self._reconnect_until:
+            self._reconnect_name = None
+            self._update(reconnecting=False,
+                         error='Não consegui reconectar. Aproxime o BB-8 da ponte e toque em Procurar.')
+            return
+        self._next_reconnect = now + RECONNECT_INTERVAL
+        try:
+            self._connect(self._reconnect_name, timeout=RECONNECT_INTERVAL, fresh=True)
+        except Exception:
+            pass  # still out of reach; try again on the next round
 
     def sleep(self):
         """Put the robot to sleep and drop the connection. Reconnecting wakes it again."""
@@ -185,7 +232,13 @@ class RobotController:
         while not self._stop.wait(DRIVE_INTERVAL):
             try:
                 with self._lock:
-                    if self._toy is None or self.state['aiming']:
+                    if self._toy is None:
+                        self._try_reconnect()
+                        continue
+                    if not getattr(self._toy, 'is_connected', True):
+                        self._link_lost()
+                        continue
+                    if self.state['aiming']:
                         continue
                     speed, heading = self._target
                     if speed and time.monotonic() - self._last_drive > DRIVE_WATCHDOG:
@@ -197,8 +250,8 @@ class RobotController:
                         self._send_roll(speed, heading)
                 if time.monotonic() - self._last_battery > BATTERY_INTERVAL:
                     self.refresh_battery()
-            except Exception as e:  # keep the loop alive; report the problem to the UI
-                self._update(error=str(e) or e.__class__.__name__)
+            except Exception as e:  # a command failed or timed out: treat it as a dropped link
+                self._link_lost(str(e) or e.__class__.__name__)
 
     def close(self):
         self._stop.set()

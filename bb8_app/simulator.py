@@ -32,9 +32,16 @@ class SimulatedBB8:
         self.address = address
         self.calls = []
         self.entered = False
+        self.in_range = True
         self.sensor_control = SimulatedSensorControl(self)
 
+    @property
+    def is_connected(self):
+        return self.entered and self.in_range
+
     def __enter__(self):
+        if not self.in_range:
+            raise RuntimeError('BB-8 fora de alcance')
         self.entered = True
         return self
 

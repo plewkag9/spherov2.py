@@ -79,7 +79,10 @@ function render(next) {
   $('connect-panel').hidden = connected;
   $('control').hidden = !connected;
   if (connected) setStatus(`Conectado a ${state.name}`, 'ok');
+  else if (state.reconnecting) setStatus('Conexão perdida. Reconectando…', 'bad');
   else setStatus('Ponte pronta. BB-8 desconectado.', 'warn');
+  if (state.error && state.error !== render.lastError) toast(state.error);
+  render.lastError = state.error;
 
   const battery = $('battery');
   battery.hidden = !state.battery;

@@ -19,7 +19,7 @@ A ponte roda num computador ou Raspberry Pi a até uns 30 m do robô. Ela fala c
 - Estado da bateria
 - Dormir e desconectar
 
-Por segurança, o robô para sozinho se a página ficar 0,6 s sem mandar comandos (por exemplo, se o Wi-Fi cair).
+Por segurança, o robô para sozinho se a página ficar 0,6 s sem mandar comandos (por exemplo, se o Wi-Fi cair). Se o Bluetooth cair, a ponte tenta reconectar sozinha por até 1 minuto.
 
 ## Como rodar
 

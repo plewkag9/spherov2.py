@@ -33,11 +33,18 @@ class BleakAdapter:
 
     def close(self, disconnect=True):
         if disconnect:
-            self.__execute(self.__device.disconnect())
+            try:
+                self.__execute(self.__device.disconnect())
+            except Exception:  # link already gone; still stop the event loop below
+                pass
         with self.__lock:
             self.__event_loop.call_soon_threadsafe(self.__event_loop.stop)
             self.__thread.join()
         self.__event_loop.close()
+
+    @property
+    def is_connected(self):
+        return self.__device.is_connected
 
     def set_callback(self, uuid, cb):
         self.__execute(self.__device.start_notify(uuid, cb))

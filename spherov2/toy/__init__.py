@@ -63,13 +63,21 @@ class Toy:
             raise
         return self
 
+    @property
+    def is_connected(self):
+        """False once the Bluetooth link has dropped. Adapters that cannot tell are assumed connected."""
+        return self.__adapter is not None and getattr(self.__adapter, 'is_connected', True)
+
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.__adapter.close()
-        self.__adapter = None
-        if self.__thread.is_alive():
-            self.__packet_queue.put(None)
-            self.__thread.join()
-        self.__packet_queue = SimpleQueue()
+        adapter, self.__adapter = self.__adapter, None
+        try:
+            if adapter is not None:
+                adapter.close()
+        finally:
+            if self.__thread.is_alive():
+                self.__packet_queue.put(None)
+                self.__thread.join()
+            self.__packet_queue = SimpleQueue()
 
     def __process_packet(self):
         while self.__adapter is not None:
