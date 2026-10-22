@@ -7,6 +7,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$s.TargetPath = (Join-Path (Get-Location) 'iniciar-bb8.bat');" ^
   "$s.WorkingDirectory = (Get-Location).Path;" ^
   "$s.Description = 'Liga a ponte do BB-8 e abre o controle no navegador';" ^
+  "$s.IconLocation = (Join-Path (Get-Location) 'bb8_app\static\icon.ico') + ',0';" ^
   "$s.Save()"
 echo Atalho "BB-8" criado na Area de Trabalho.
 pause
