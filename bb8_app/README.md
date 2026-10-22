@@ -30,7 +30,7 @@ pip install -r bb8_app/requirements.txt
 python -m bb8_app
 ```
 
-No Windows, também dá para dar duplo clique em `iniciar-bb8.bat`, na pasta principal.
+No Windows, também dá para dar duplo clique em `iniciar-bb8.bat`, na pasta principal: ele liga a ponte e já abre a página no navegador (`--open`). Para ter isso na Área de Trabalho, dê duplo clique uma vez em `criar-atalho-bb8.bat`, que cria o atalho **BB-8**. O arquivo `Abrir BB-8.url` abre só a página, quando a ponte já está ligada.
 
 O terminal mostra o endereço para abrir, algo como `http://192.168.0.10:8088/`. Abra no navegador do computador ou no iPhone ligado ao mesmo Wi-Fi.
 

@@ -1,8 +1,10 @@
 """Run the BB-8 bridge: ``python -m bb8_app [--simulate] [--host 0.0.0.0] [--port 8088] [--token SECRET]``."""
 import argparse
+import asyncio
 import logging
 import os
 import socket
+import webbrowser
 from functools import partial
 
 from aiohttp import web
@@ -26,6 +28,7 @@ def main():
     parser.add_argument('--token', default=os.environ.get('BB8_TOKEN'),
                         help='senha exigida pela página (ou variável BB8_TOKEN)')
     parser.add_argument('--simulate', action='store_true', help='usa um BB-8 falso, para testar sem o robô')
+    parser.add_argument('--open', action='store_true', help='abre a página no navegador deste computador')
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
 
@@ -42,8 +45,17 @@ def main():
         url += f'#token={args.token}'
     print(f'Abra no navegador (computador ou iPhone no mesmo Wi-Fi): {url}')
     print('Deixe esta janela aberta. Fechar a janela ou apertar Ctrl+C desliga a ponte.', flush=True)
+    app = create_app(find_toys, args.token)
+    if args.open:
+        local_url = f'http://localhost:{args.port}/' + (f'#token={args.token}' if args.token else '')
+
+        async def open_browser(app):
+            # on_startup runs just before the port starts listening, so give it a moment.
+            asyncio.get_running_loop().call_later(1.0, webbrowser.open, local_url)
+
+        app.on_startup.append(open_browser)
     try:
-        web.run_app(create_app(find_toys, args.token), host=args.host, port=args.port, print=None)
+        web.run_app(app, host=args.host, port=args.port, print=None)
     finally:
         print('Ponte desligada.', flush=True)
 
